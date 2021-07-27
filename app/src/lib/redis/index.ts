@@ -35,9 +35,13 @@ export function connect(config: any, logger: any) {
 			// load scripts into redis
 			const scripts = fs.readdirSync(scriptsDir);
 			scripts.forEach(filename => {
-				const scriptName = filename.split(".").slice(0, -1).join(".");
-				const scriptContent = fs.readFileSync(path.resolve(scriptsDir, filename)).toString();
-				redis.addScript(scriptName, scriptContent);
+				const extName = path.extname(filename);
+				if (extName === "lua") {
+					// we will inject all .lua scripts into the redis instance
+					const scriptName = filename.split(".").slice(0, -1).join(".");
+					const scriptContent = fs.readFileSync(path.resolve(scriptsDir, filename)).toString();
+					redis.addScript(scriptName, scriptContent);
+				}
 			});
 		}
 
