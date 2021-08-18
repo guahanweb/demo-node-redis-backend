@@ -36,7 +36,7 @@ export function connect(config: any, logger: any) {
 			const scripts = fs.readdirSync(scriptsDir);
 			scripts.forEach(filename => {
 				const extName = path.extname(filename);
-				if (extName === "lua") {
+				if (extName === ".lua") {
 					// we will inject all .lua scripts into the redis instance
 					const scriptName = filename.split(".").slice(0, -1).join(".");
 					const scriptContent = fs.readFileSync(path.resolve(scriptsDir, filename)).toString();
@@ -48,6 +48,14 @@ export function connect(config: any, logger: any) {
 		redis.init(config);
 		initialized = true;
 	});
+}
+
+// specifically for new pub/sub needs
+export function createClient() {
+	if (!initialized) {
+		throw new Error("cannot create new redis client before initialization");
+	}
+	return redis.createClient();
 }
 
 export function getClient() {
