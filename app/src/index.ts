@@ -30,7 +30,7 @@ async function main() {
         }
     });
 
-    controller.bus.on("votes", (votes: any[]) => {
+    controller.bus.on("scores", (votes: any[]) => {
         websockets.broadcast({
             topic: "votes",
             data: votes
