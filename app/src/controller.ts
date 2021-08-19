@@ -49,3 +49,47 @@ export async function vote(choice: string) {
         ]
     );
 }
+
+// retrieve and format the current total votes
+export function getVotes() {
+    const { client } = redis.getClient();
+    return new Promise((resolve, reject) => {
+        client.zrevrangebyscore(
+            keys.leaderboard,
+            "+inf",
+            "-inf",
+            "withscores",
+            function (err: Error, reply: any) {
+                if (err) {
+                    return reject(err);
+                }
+
+                let result: object[] = [];
+                for (let i = 0; i < reply.length; i += 2) {
+                    result.push({
+                        choice: reply[i],
+                        votes: parseInt(reply[i+1]),
+                    });
+                }
+                resolve(result);
+            }
+        );
+    })
+}
+
+export function reset() {
+    const { client } = redis.getClient();
+    return new Promise((resolve, reject) => {
+        // we are only clearing the leaderboard
+        // all time historical votes are not impacted
+        client.del(
+            keys.leaderboard,
+            function (err: Error, reply: any) {
+                if (!!err) {
+                    return reject(err);
+                }
+                resolve(reply);
+            }
+        )
+    })
+}

@@ -1,31 +1,33 @@
+import EventEmitter from "events"
 import WebSocket from "ws"
 import { getLogger } from "./lib/logger"
 import config from "./config"
 
 const logger = getLogger("websockets", config.app);
 
+export const bus = new EventEmitter;
+
 let wss: WebSocket.Server;
 let initialized: boolean = false;
-let handler: Function = () => {}; // default to noop
 
+// initialize the websocket server and listen for connections
 export async function initialize(server: any) {
     if (!initialized) {
         wss = new WebSocket.Server({ server });
         
         wss.on("connection", (ws: WebSocket) => {
+            // handle inbound messages
             ws.on("message", handleMessage);
-            // immediately send a welcome message to connection
-            ws.send("welcome");
+            // emit a connection for any initialization messages
+            bus.emit("connect", ws);
         });
 
         initialized = true;
     }
 }
 
-export function command(cb: Function) {
-    handler = cb;
-}
-
+// basic message parsing
+// example: c::{"action":"vote","choice":"smile"}
 function handleMessage(this: WebSocket, buffer: Buffer, isBinary: boolean) {
     const ws = this;
     const message = buffer.toString();
@@ -35,12 +37,13 @@ function handleMessage(this: WebSocket, buffer: Buffer, isBinary: boolean) {
     switch (type) {
         case "c":
             // command signal
-            return handler(ws, payload);
+            bus.emit("command", ws, payload);
         default:
             logger.debug(`Unknown message: ${message}`);
     }
 }
 
+// enable broadcasting to all connected sockets
 export async function broadcast(data: any, isBinary: boolean = false) {
     wss.clients.forEach(function each(client) {
         if (client.readyState === WebSocket.OPEN) {
