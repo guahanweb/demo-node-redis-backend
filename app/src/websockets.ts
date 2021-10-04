@@ -37,7 +37,7 @@ function handleMessage(this: WebSocket, buffer: Buffer, isBinary: boolean) {
     switch (type) {
         case "c":
             // command signal
-            bus.emit("command", ws, payload);
+            return bus.emit("command", ws, payload);
         default:
             logger.debug(`Unknown message: ${message}`);
     }

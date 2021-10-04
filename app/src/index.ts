@@ -6,6 +6,7 @@ import * as websockets from "./websockets"
 import * as controller from "./controller"
 import http from "http"
 import WebSocket from "ws"
+import { VotingGame } from "./voting-game"
 
 const logger = getLogger("main", config.app);
 const app = express();
@@ -20,39 +21,8 @@ async function main() {
 	await bootstrap(app);
 	logger.debug("bootstrap completed");
 
-    // on a new connection, we need to send the current scores
-    websockets.bus.on("connect", async function (ws: WebSocket) {
-        const votes = await controller.getVotes();
-        ws.send(JSON.stringify({ topic: "votes", data: votes }));
-    });
-
-    // whenever a command is received from a websocket, process it here
-    websockets.bus.on("command", function (ws: WebSocket, cmd: any) {
-        const { action, info } = cmd;
-        if (action === "vote") {
-            // we send the vote to be stored
-            controller.vote(info)
-                .then(() => ws.send("ok"));
-        } else if (action === "reset") {
-            controller.reset()
-                .then(() => {
-                    ws.send("ok");
-                    websockets.broadcast({
-                        topic: "votes",
-                        data: [],
-                    });
-                })
-        }
-    });
-
-    // whenever redis broadcasts a new score update, we will relay the
-    // results to all connected clients
-    controller.bus.on("scores", (votes: object[]) => {
-        websockets.broadcast({
-            topic: "votes",
-            data: votes
-        });
-    });
+    // set up game
+    const game = new VotingGame();
 
 	// start listening for traffic
 	server.listen(config.app.port, function () {
