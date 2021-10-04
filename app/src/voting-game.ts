@@ -1,6 +1,7 @@
 import * as websockets from "./websockets"
 import * as controller from "./controller"
 import WebSocket from "ws"
+import { startTimer } from "winston"
 
 interface GameOptions {
     choices?: string[]
@@ -41,7 +42,7 @@ export class VotingGame {
             } else if (action === "reset") {
                 game.reset();
             } else if (action === "start") {
-                game.start(false);
+                game.start();
             } else if (action === "stop") {
                 game.stop();
             }
@@ -75,11 +76,12 @@ export class VotingGame {
 
         // start timer for game
         tick();
-        function tick() {
+        async function tick() {
             websockets.broadcast({
                 topic: "timer",
-                data: game.countdown--,
-            })
+                data: game.countdown,
+            });
+            game.countdown--;
 
             // if we are auto-timing the game, tick recursively
             if (auto === true) {
@@ -90,6 +92,12 @@ export class VotingGame {
                     // we're done, set the game state
                     game.running = false;
                     game.status = "complete";
+
+                    const state = await game.getState();
+                    websockets.broadcast({
+                        topic: "state",
+                        data: state,
+                    });
                 }
             }
         }
