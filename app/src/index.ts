@@ -5,7 +5,6 @@ import { connect as initializeRedis } from "./lib/redis"
 import * as websockets from "./websockets"
 import * as controller from "./controller"
 import http from "http"
-import WebSocket from "ws"
 import { VotingGame } from "./voting-game"
 
 const logger = getLogger("main", config.app);

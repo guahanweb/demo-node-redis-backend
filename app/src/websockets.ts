@@ -14,7 +14,7 @@ let initialized: boolean = false;
 export async function initialize(server: any) {
     if (!initialized) {
         wss = new WebSocket.Server({ server });
-        
+
         wss.on("connection", (ws: WebSocket) => {
             // handle inbound messages
             ws.on("message", handleMessage);
