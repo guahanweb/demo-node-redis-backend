@@ -1,5 +1,5 @@
 import config from "./config"
-import express from "express"
+import express, { Application, Request, Response } from "express"
 import { getLogger } from "./lib/logger"
 import { connect as initializeRedis } from "./lib/redis"
 import * as websockets from "./websockets"
@@ -30,7 +30,10 @@ async function main() {
 	})
 }
 
-async function bootstrap(app: Express.Application) {
+async function bootstrap(app: Application) {
+	// healthcheck endpoint
+	app.get("/healthcheck", (req: Request, res: Response) => res.send("ok"));
+
 	// initialize redis connection
 	const redisLogger = getLogger("redis", config.app);
 	await initializeRedis(config.redis, redisLogger);
